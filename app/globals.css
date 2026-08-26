@@ -10,6 +10,11 @@
 .sprite-card.is-animated:hover .animated-badge,.sprite-card.is-animated:focus-visible .animated-badge{background:var(--accent)}
 .expand-all{height:42px;padding:0 15px;border:1px solid var(--navy);background:#fff;color:var(--navy);font-weight:800;cursor:pointer;white-space:nowrap}
 .server-list{display:grid;gap:10px;margin-top:14px}
+.server-subtabs{display:flex;gap:7px;margin-top:12px;padding:10px;overflow-x:auto;border:1px solid var(--line);background:#fff}
+.server-subtabs button{display:flex;align-items:center;gap:7px;min-height:36px;padding:0 12px;border:1px solid var(--line);background:#f7f7f7;color:var(--muted);font-size:12px;font-weight:750;white-space:nowrap;cursor:pointer}
+.server-subtabs button span{padding:2px 5px;border-radius:9px;background:#e7e9ed;color:#727783;font:700 9px monospace}
+.server-subtabs button.active{border-color:var(--accent);background:var(--accent);color:#fff}
+.server-subtabs button.active span{background:rgba(255,255,255,.2);color:#fff}
 .server-item{background:#fff;border:1px solid var(--line)}
 .server-item.open{border-color:#c8ccd3;box-shadow:0 5px 16px rgba(24,26,32,.05)}
 .server-item-head{width:100%;min-height:88px;padding:10px 18px 10px 10px;display:grid;grid-template-columns:74px 1fr 28px;align-items:center;gap:16px;border:0;background:#fff;color:var(--ink);text-align:left;cursor:pointer}

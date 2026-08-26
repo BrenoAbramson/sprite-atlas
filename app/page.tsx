@@ -3,7 +3,7 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SpriteCanvas } from "../components/SpriteCanvas";
 import { Catalog, Category, StoredLibrary, Thing, deleteLibrary, listLibraries, parseCatalog, saveLibrary } from "../lib/tibia";
-import { SERVER_FLAG_LABELS, ServerItem, parseServerItems } from "../lib/server-items";
+import { SERVER_FLAG_LABELS, SERVER_ITEM_GROUPS, ServerItem, parseServerItems } from "../lib/server-items";
 
 type Loaded = { library: StoredLibrary; catalog: Catalog; spr: ArrayBuffer; serverItems: ServerItem[] };
 const tabs = ["Resumo", "Items", "Items do servidor", "Outfits", "Effects", "Missiles", "Todas as sprites"] as const;
@@ -24,6 +24,7 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [allOpen, setAllOpen] = useState(false);
+  const [serverGroup, setServerGroup] = useState<string>("all");
   const fileInput = useRef<HTMLInputElement>(null);
   const serverInput = useRef<HTMLInputElement>(null);
 
@@ -37,7 +38,7 @@ export default function Home() {
       let serverItems: ServerItem[] = [];
       if (library.otb && library.itemsXml) serverItems = parseServerItems(await library.otb.arrayBuffer(), await library.itemsXml.text(), catalog.things.items);
       setLoaded({ library, catalog, spr, serverItems });
-      setTab("Resumo"); setPage(1); setQuery("");
+      setTab("Resumo"); setPage(1); setQuery(""); setServerGroup("all");
       localStorage.setItem("sprite-atlas-active", library.id);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Falha ao processar os arquivos."); }
     finally { setBusy(false); }
@@ -113,13 +114,13 @@ export default function Home() {
   const filteredServerItems = useMemo(() => {
     if (!loaded || tab !== "Items do servidor") return [];
     const search = query.trim().toLocaleLowerCase("pt-BR");
-    if (!search) return loaded.serverItems;
-    return loaded.serverItems.filter((item) => item.name.toLocaleLowerCase("pt-BR").includes(search) || String(item.sid).includes(search));
-  }, [loaded, tab, query]);
+    const byGroup = serverGroup === "all" ? loaded.serverItems : loaded.serverItems.filter((item) => item.group === Number(serverGroup));
+    return search ? byGroup.filter((item) => item.name.toLocaleLowerCase("pt-BR").includes(search) || String(item.sid).includes(search)) : byGroup;
+  }, [loaded, tab, query, serverGroup]);
   const activeEntries: Array<number | Thing | ServerItem> = tab === "Items do servidor" ? filteredServerItems : entries;
   const pageCount = Math.max(1, Math.ceil(activeEntries.length / PAGE_SIZE));
   const visible = activeEntries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  useEffect(() => setPage(1), [tab, query]);
+  useEffect(() => setPage(1), [tab, query, serverGroup]);
 
   function changePage(nextPage: number) {
     setPage(nextPage);
@@ -150,6 +151,10 @@ export default function Home() {
           {tab === "Items do servidor" && <button className="expand-all" onClick={() => setAllOpen((value) => !value)}>{allOpen ? "Fechar todos" : "Abrir todos"}</button>}
           <label className="zoom"><span>Zoom</span><select value={scale} onChange={(event) => setScale(Number(event.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={3}>3×</option><option value={4}>4×</option></select></label>
         </div>
+        {tab === "Items do servidor" && <nav className="server-subtabs" aria-label="Tipos de items">{SERVER_ITEM_GROUPS.map((group) => {
+          const count = group.id === "all" ? loaded.serverItems.length : loaded.serverItems.filter((item) => item.group === group.id).length;
+          return <button key={group.id} className={String(group.id) === serverGroup ? "active" : ""} onClick={() => setServerGroup(String(group.id))}>{group.label}<span>{count.toLocaleString("pt-BR")}</span></button>;
+        })}</nav>}
         {tab !== "Items do servidor" && <p className="animation-hint">Sprites com mais de um frame animam ao passar o mouse ou selecionar o cartão.</p>}
         {tab === "Items do servidor" ? <div className="server-list">{(visible as ServerItem[]).map((item) => <ServerItemCard key={item.sid} item={item} loaded={loaded} scale={scale} forceOpen={allOpen} />)}</div> : <div className="catalog-grid">{(visible as Array<number | Thing>).map((entry) => <SpriteCard key={`${tab}-${typeof entry === "number" ? entry : entry.id}`} entry={entry} loaded={loaded} scale={scale} />)}</div>}
         {!visible.length && <div className="empty-state"><h3>ID não encontrado</h3><p>Confira o número ou limpe o campo de busca.</p></div>}

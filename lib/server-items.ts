@@ -3,6 +3,7 @@ import { Thing } from "./tibia";
 export type ServerItem = {
   sid: number;
   clientId: number;
+  group: number;
   name: string;
   thing?: Thing;
   slot?: string;
@@ -14,7 +15,16 @@ export type ServerItem = {
   flags: Record<string, boolean>;
 };
 
-type Node = { props: number[]; children: Node[] };
+type Node = { type: number; props: number[]; children: Node[] };
+
+export const SERVER_ITEM_GROUPS = [
+  { id: "all", label: "Todos" },
+  { id: 0, label: "Nenhum" }, { id: 1, label: "Chão" }, { id: 2, label: "Recipiente" },
+  { id: 3, label: "Arma" }, { id: 4, label: "Munição" }, { id: 5, label: "Armadura" },
+  { id: 6, label: "Cargas" }, { id: 7, label: "Teleporte" }, { id: 8, label: "Campo mágico" },
+  { id: 9, label: "Gravável" }, { id: 10, label: "Chave" }, { id: 11, label: "Splash" },
+  { id: 12, label: "Recipiente de fluido" }, { id: 13, label: "Porta" }, { id: 14, label: "Obsoleto" },
+] as const;
 
 const FLAG_LABELS: Array<[number, string]> = [
   [1, "Bloqueia passagem"], [8192, "Sempre no topo"], [128, "Empilhável"],
@@ -31,8 +41,8 @@ function tree(buffer: ArrayBuffer): Node {
   let cursor = 4;
   function readNode(): Node {
     if (bytes[cursor++] !== 0xfe) throw new Error("Estrutura inválida no items.otb.");
-    cursor++; // tipo do nó
-    const node: Node = { props: [], children: [] };
+    const type = bytes[cursor++];
+    const node: Node = { type, props: [], children: [] };
     while (cursor < bytes.length) {
       const value = bytes[cursor++];
       if (value === 0xfd) node.props.push(bytes[cursor++]);
@@ -105,7 +115,7 @@ export function parseServerItems(otb: ArrayBuffer, xml: string, things: Thing[])
       .filter(([key, value]) => value && (key.startsWith("skill") || ["magiclevelpoints", "absorbpercentall", "speed"].includes(key)))
       .map(([key, value]) => `${key}: ${value}`);
     result.push({
-      sid, clientId, thing: byClientId.get(clientId), name: xmlItem.name || name || `Item ${sid}`,
+      sid, clientId, group: node.type, thing: byClientId.get(clientId), name: xmlItem.name || name || `Item ${sid}`,
       slot: xmlItem.slottype || slot,
       attack: numberValue(xmlItem, "attack") ?? attack,
       armor: numberValue(xmlItem, "armor") ?? armor,
