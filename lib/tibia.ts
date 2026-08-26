@@ -116,7 +116,7 @@ export function decodeSprite(buffer: ArrayBuffer, offsets: Uint32Array, id: numb
   return new ImageData(pixels, 32, 32);
 }
 
-export type StoredLibrary = { id: string; name: string; version: number; createdAt: number; dat: Blob; spr: Blob };
+export type StoredLibrary = { id: string; name: string; version: number; createdAt: number; dat: Blob; spr: Blob; otb?: Blob; itemsXml?: Blob };
 const DB_NAME = "sprite-atlas";
 const STORE = "libraries";
 
