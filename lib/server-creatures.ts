@@ -30,7 +30,10 @@ export async function parseNpcs(spawnFile: File, npcFiles: File[]): Promise<NpcE
     if (document.documentElement.tagName.toLowerCase() !== "npc") return;
     const npcLook = look(document);
     const name = document.documentElement.getAttribute("name");
-    if (name && npcLook) looks.set(name.toLocaleLowerCase("pt-BR"), npcLook);
+    if (!npcLook) return;
+    const fileName = file.name.replace(/\.xml$/i, "").toLocaleLowerCase("pt-BR");
+    looks.set(fileName, npcLook);
+    if (name) looks.set(name.toLocaleLowerCase("pt-BR"), npcLook);
   }));
   const entries: NpcEntry[] = [];
   spawnDocument.querySelectorAll("spawn").forEach((spawn) => {
